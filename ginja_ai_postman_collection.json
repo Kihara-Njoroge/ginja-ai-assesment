@@ -42,8 +42,19 @@
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"doctor@ginja.ai\",\n  \"password\": \"StrongPass_123!\"\n}"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "doctor@ginja.ai",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "StrongPass_123!",
+                  "type": "text"
+                }
+              ]
             },
             "url": {
               "raw": "{{BASE_URL}}/auth/login",

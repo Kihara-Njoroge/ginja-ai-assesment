@@ -169,7 +169,7 @@ async def test_login_success(client: AsyncClient, mock_db_session: AsyncMock, mo
 
     response = await client.post(
         "/auth/login",
-        json={"username": "test@example.com", "password": "StrongPassword123!"},
+        data={"username": "test@example.com", "password": "StrongPassword123!"},
     )
 
     assert response.status_code == 200
@@ -199,7 +199,7 @@ async def test_login_invalid(client: AsyncClient, mock_db_session: AsyncMock, mo
 
     response = await client.post(
         "/auth/login",
-        json={"username": "test@example.com", "password": "WrongPassword"},
+        data={"username": "test@example.com", "password": "WrongPassword"},
     )
 
     assert response.status_code == 401
