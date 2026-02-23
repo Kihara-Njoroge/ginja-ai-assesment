@@ -150,7 +150,7 @@ class ClaimValidator:
         - If claim > remaining benefit: PARTIAL (approve up to remaining)
         - Otherwise: APPROVED (full amount)
         """
-        if fraud_flag and claim_amount > remaining_benefit:
+        if fraud_flag:
             return ClaimStatus.REJECTED, Decimal("0.00")
 
         if claim_amount > remaining_benefit:

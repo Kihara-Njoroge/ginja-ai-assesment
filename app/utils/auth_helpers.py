@@ -208,4 +208,4 @@ async def get_auth_user(
 
 
 def get_auth_headers(token: str = Depends(oauth2_scheme)) -> dict:
-    return {"Authorization": f"Bearer {token}", "Client-Name": "INNOVEX"}
+    return {"Authorization": f"Bearer {token}"}
