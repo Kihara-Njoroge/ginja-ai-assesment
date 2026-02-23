@@ -62,7 +62,6 @@ class UserGetSchema(UserIsSuperUser):
     phone_number: Optional[str] = None
     status: UserStatus
     role: UserRole
-    organization: Optional[List[UUID4]] = None
 
     model_config = ConfigDict(from_attributes=True, frozen=True)
 

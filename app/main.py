@@ -49,24 +49,39 @@ def create_app() -> FastAPI:
     async def rapidoc_html() -> HTMLResponse:
         """Serve RapiDoc Custom UI."""
         html = f"""
-        <!doctype html> <!-- Important: must specify -->
-        <html>
-        <head>
-            <meta charset="utf-8"> <!-- Important: ios -->
-            <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
-            <title>{settings.APP_NAME} - API Docs</title>
-        </head>
-        <body>
-            <rapi-doc 
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{{ title|default("Docs")}} | Flip Api Docs</title>
+                <meta charset="utf-8" />
+                <meta
+                http-equiv="Content-Security-Policy"
+                content="upgrade-insecure-requests"
+                />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <script
+                type="module"
+                src="https://cdn.jsdelivr.net/npm/rapidoc@latest/dist/rapidoc-min.js"
+                ></script>
+            </head>
+            <body>
+                <rapi-doc
                 spec-url="/openapi.json"
-                theme="dark"
-                render-style="read"
-                show-header="false"
-                allow-server-selection="false"
                 allow-authentication="true"
-            > </rapi-doc>
-        </body>
-        </html>
+                allow-search="true"
+                allow-try="true"
+                theme="dark"
+                schema-style="table"
+                show-method-in-nav-bar="as-colored-text"
+                allow-server-selection="false"
+                show-header="true"
+                info-description-headings-in-navbar="true"
+                persist-auth="true"
+                schema-description-expanded="true"
+                >
+                </rapi-doc>
+            </body>
+            </html>
         """
         return HTMLResponse(html)
 
