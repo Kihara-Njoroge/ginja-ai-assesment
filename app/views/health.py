@@ -2,7 +2,7 @@ from app.routers import health_router
 from app.config import get_settings
 
 
-@health_router.get("/health")
+@health_router.get("")
 async def health_check() -> dict:
     """Health check endpoint for load balancers and monitoring."""
     settings = get_settings()
