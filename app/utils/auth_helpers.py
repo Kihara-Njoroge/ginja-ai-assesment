@@ -1,11 +1,9 @@
 import base64
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone
 from hashlib import sha1
 from typing import Literal, TypedDict, Optional
 from uuid import UUID
-from enum import Enum
 
-from authlib.integrations.starlette_client import OAuth
 from fastapi import HTTPException, status
 from jose import exceptions, jwt
 from sqlalchemy import select
@@ -17,6 +15,10 @@ from app.crud.auth.verification import verify_otp, set_otp_as_used
 from app.models.user import User
 from app.models.token import VerificationToken
 from app.enums import VerificationTypeEnum, UserStatus
+
+from fastapi import Depends
+from app.utils.security import oauth2_scheme
+from app.database import get_db
 
 settings = get_settings()
 
@@ -88,7 +90,7 @@ async def authenticate_user_via_otp(db: AsyncSession, username: str, otp: str):
         select(VerificationToken)
         .where(VerificationToken.user_id == user.id)
         .where(VerificationToken.token_type == VerificationTypeEnum.LOGIN)
-        .where(VerificationToken.is_valid == True)
+        .where(VerificationToken.is_valid.is_(True))
         .order_by(VerificationToken.expires_at.desc())
     )
     result = await db.execute(stmt)
@@ -185,23 +187,25 @@ def decode_token(token, force_access=True, force_refresh=False):
         )
 
 
-# --- Google OAuth setup ---
-oauth = OAuth()
-if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
-    oauth.register(
-        name="google",
-        client_id=settings.GOOGLE_CLIENT_ID,
-        client_secret=settings.GOOGLE_CLIENT_SECRET,
-        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid email profile"},
-    )
+def get_current_user_id(token: str = Depends(oauth2_scheme)):
+    payload = decode_token(token, force_access=True)
+    user_id: str = payload.get("user_id")
+    return user_id
 
 
-def safe_jsonify(obj):
-    if isinstance(obj, (UUID,)):
-        return str(obj)
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    if isinstance(obj, Enum):
-        return obj.value
-    return str(obj)
+async def get_auth_user(
+    current_user: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)
+):
+    from app.crud.auth.user import get_user_by_id
+
+    user = await get_user_by_id(db, UUID(current_user))
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User unauthenticated!",
+        )
+    return user
+
+
+def get_auth_headers(token: str = Depends(oauth2_scheme)) -> dict:
+    return {"Authorization": f"Bearer {token}", "Client-Name": "INNOVEX"}

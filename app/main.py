@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -97,8 +97,12 @@ def create_app() -> FastAPI:
     )
 
     # Routers
-    app.include_router(health_router)
-    app.include_router(user_router)
-    app.include_router(auth_router)
+    prefix = getattr(settings, "APP_PREFIX", "")
+    api_router = APIRouter(prefix=prefix)
+    api_router.include_router(health_router)
+    api_router.include_router(user_router)
+    api_router.include_router(auth_router)
+
+    app.include_router(api_router)
 
     return app

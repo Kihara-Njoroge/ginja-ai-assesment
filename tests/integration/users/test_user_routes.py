@@ -34,7 +34,7 @@ async def test_register_user_success(client, mock_db_session, mocker):
         },
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 201, response.text
     data = response.json()
     assert data["email"] == "test@example.com"
     assert data["first_name"] == "John"
