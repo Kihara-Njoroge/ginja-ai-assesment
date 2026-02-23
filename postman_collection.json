@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "Ginja AI - Claims Management API",
+    "description": "Health claims intelligence platform API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API is running"
+      }
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Submit Claim - Approved",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": \"M123\",\n  \"provider_id\": \"H456\",\n  \"diagnosis_code\": \"D001\",\n  \"procedure_code\": \"P001\",\n  \"claim_amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/claims",
+              "host": ["{{base_url}}"],
+              "path": ["claims"]
+            },
+            "description": "Submit a claim that will be approved (amount within limits, no fraud)"
+          }
+        },
+        {
+          "name": "Submit Claim - Fraud Flagged",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": \"M123\",\n  \"provider_id\": \"H456\",\n  \"diagnosis_code\": \"D001\",\n  \"procedure_code\": \"P001\",\n  \"claim_amount\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/claims",
+              "host": ["{{base_url}}"],
+              "path": ["claims"]
+            },
+            "description": "Submit a claim that will be flagged for fraud (amount > 2x average)"
+          }
+        },
+        {
+          "name": "Submit Claim - Partial Approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": \"M124\",\n  \"provider_id\": \"H456\",\n  \"diagnosis_code\": \"D001\",\n  \"procedure_code\": \"P001\",\n  \"claim_amount\": 45000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/claims",
+              "host": ["{{base_url}}"],
+              "path": ["claims"]
+            },
+            "description": "Submit a claim for M124 who has limited remaining benefit (40k remaining)"
+          }
+        },
+        {
+          "name": "Submit Claim - Rejected (Inactive Member)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": \"M125\",\n  \"provider_id\": \"H456\",\n  \"diagnosis_code\": \"D001\",\n  \"procedure_code\": \"P001\",\n  \"claim_amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/claims",
+              "host": ["{{base_url}}"],
+              "path": ["claims"]
+            },
+            "description": "Submit a claim for inactive member (will be rejected)"
+          }
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims/{{claim_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["claims", "{{claim_id}}"]
+            },
+            "description": "Retrieve a specific claim by its ID"
+          }
+        },
+        {
+          "name": "List All Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims",
+              "host": ["{{base_url}}"],
+              "path": ["claims"]
+            },
+            "description": "List all claims with default pagination"
+          }
+        },
+        {
+          "name": "List Claims - Filter by Member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims?member_id=M123",
+              "host": ["{{base_url}}"],
+              "path": ["claims"],
+              "query": [
+                {
+                  "key": "member_id",
+                  "value": "M123"
+                }
+              ]
+            },
+            "description": "List claims for a specific member"
+          }
+        },
+        {
+          "name": "List Claims - Filter by Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims?provider_id=H456",
+              "host": ["{{base_url}}"],
+              "path": ["claims"],
+              "query": [
+                {
+                  "key": "provider_id",
+                  "value": "H456"
+                }
+              ]
+            },
+            "description": "List claims from a specific provider"
+          }
+        },
+        {
+          "name": "List Claims - Filter by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims?status=APPROVED",
+              "host": ["{{base_url}}"],
+              "path": ["claims"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPROVED",
+                  "description": "PENDING, APPROVED, PARTIAL, or REJECTED"
+                }
+              ]
+            },
+            "description": "List claims by status"
+          }
+        },
+        {
+          "name": "List Claims - Paginated",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/claims?page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["claims"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List claims with custom pagination"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "claim_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

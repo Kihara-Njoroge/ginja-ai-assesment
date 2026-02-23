@@ -1,5 +1,6 @@
 import logging
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -7,7 +8,6 @@ from app.routers import auth_router
 from app.schemas.auth.verification import (
     RequestOTPInput,
     ValidateOTPInput,
-    LoginInput,
     RefreshTokenInput,
 )
 from app.utils.auth_helpers import (
@@ -101,7 +101,7 @@ async def resend_otp(
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
-    payload: LoginInput,
+    payload: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
     """

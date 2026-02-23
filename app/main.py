@@ -8,11 +8,12 @@ from fastapi.responses import HTMLResponse
 from app.config import get_settings
 from app.database import engine
 from app.middleware import RequestLoggingMiddleware
-from app.routers import health_router, user_router, auth_router
+from app.routers import health_router, user_router, auth_router, claims_router
 
 import app.views.health  # noqa: F401
 import app.views.auth.users  # noqa: F401
 import app.views.auth.verification  # noqa: F401
+import app.views.claims.claims  # noqa: F401
 
 
 @asynccontextmanager
@@ -102,6 +103,7 @@ def create_app() -> FastAPI:
     api_router.include_router(health_router)
     api_router.include_router(user_router)
     api_router.include_router(auth_router)
+    api_router.include_router(claims_router)
 
     app.include_router(api_router)
 
