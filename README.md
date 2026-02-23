@@ -128,7 +128,3 @@ uv run pytest
 | `ALLOWED_ORIGINS` | `["*"]`     | CORS allowed origins (JSON array)  |
 | `LOG_LEVEL`       | `INFO`      | Python logging level               |
 | `DATABASE_URL`    | `postgresql+asyncpg://...` | Async PostgreSQL connection URL |
-
-## License
-
-Private — All rights reserved.

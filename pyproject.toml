@@ -21,4 +21,7 @@ ginja-ai = "main:main"
 dev = [
     "pytest>=8.0",
     "httpx>=0.27",
+    "pytest-asyncio>=1.3.0",
+    "pytest-mock>=3.15.1",
+    "pytest-cov>=7.0.0",
 ]
