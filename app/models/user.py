@@ -1,29 +1,14 @@
-import enum
 import uuid
 from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, Enum, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, validates
+from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 from fastapi import HTTPException
 
 from app.database import Base
-
-
-class UserRole(str, enum.Enum):
-    """Roles for user authorization."""
-
-    ADMIN = "admin"
-    USER = "user"
-
-
-class UserStatus(str, enum.Enum):
-    """Lifecycle status of a user account."""
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
+from app.enums import UserRole, UserStatus
 
 
 class User(Base):
@@ -68,6 +53,9 @@ class User(Base):
     )
     is_superuser: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default="false"
+    )
+    verification_tokens: Mapped[list["VerificationToken"]] = relationship(
+        "VerificationToken", back_populates="user", cascade="all, delete-orphan"
     )
 
     # Timestamps
