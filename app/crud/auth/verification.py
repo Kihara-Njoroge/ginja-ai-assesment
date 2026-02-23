@@ -64,7 +64,7 @@ async def get_otp_by_otp_str(
     stmt = select(VerificationToken).where(VerificationToken.token == hashed_otp)
     if safe:
         stmt = stmt.where(VerificationToken.expires_at > datetime.now(timezone.utc))
-        stmt = stmt.where(VerificationToken.is_valid == True)
+        stmt = stmt.where(VerificationToken.is_valid.is_(True))
 
     result = await db.execute(stmt)
     return result.scalars().first()
