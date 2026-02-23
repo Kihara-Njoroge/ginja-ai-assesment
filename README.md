@@ -112,7 +112,7 @@ curl http://localhost:8000/claims/{claim_id}
 curl "http://localhost:8000/claims?member_id=M123&status=APPROVED"
 ```
 
-For detailed API documentation, see [CLAIMS_SYSTEM.md](./CLAIMS_SYSTEM.md).
+For detailed API documentation, see [CLAIMS_SYSTEM.md](./guides//CLAIMS_SYSTEM.md).
 
 ## Docker
 
@@ -262,3 +262,27 @@ While this application implements a robust Clean Architecture and FastAPI best-p
 | `ALLOWED_ORIGINS` | `["*"]`     | CORS allowed origins (JSON array)  |
 | `LOG_LEVEL`       | `INFO`      | Python logging level               |
 | `DATABASE_URL`    | `postgresql+asyncpg://...` | Async PostgreSQL connection URL |
+
+## CI/CD Deployment Pipeline (Azure)
+
+This repository includes a production-grade automated deployment pipeline utilizing GitHub Actions `.github/workflows/deploy.yml`.
+
+The pipeline executes the following sequential steps on any push to the `main` branch:
+1. **Test & Lint**: Validates the codebase using `ruff` and executes the full `pytest` suite simulating database connectivity.
+2. **Trivy Vulnerability Scan**: Scans Python dependencies natively looking for CVEs.
+3. **Dockerize**: Builds the API container resolving the `Dockerfile`.
+4. **Trivy Image Scan**: Validates the built container OS for vulnerabilities.
+5. **Azure Container Registry (ACR)**: Pushes the highly secure image up to the Registry storage.
+6. **Azure Container Apps**: Instructs the cloud environment to spin down the active containers and spin up the new image.
+
+### Azure Secret Configuration
+To enable the pipeline, the following secrets must be added to your GitHub repository under **Settings > Secrets and variables > Actions**:
+
+| Secret Name | Description |
+|---|---|
+| `AZURE_CREDENTIALS` | Your Azure Service Principal credentials (JSON form) for auth. |
+| `REGISTRY_LOGIN_SERVER` | Target Azure Container Registry URL (e.g. `youracr.azurecr.io`). |
+| `REGISTRY_USERNAME` | Service Principal / Admin User of the ACR. |
+| `REGISTRY_PASSWORD` | Access key for the ACR. |
+| `AZURE_RESOURCE_GROUP` | The Resource Group holding your Container Apps. |
+| `CONTAINER_APP_NAME` | The exact name of your deployed Azure Container App. |
