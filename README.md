@@ -1,5 +1,8 @@
 # Ginja AI
 
+[![CI Tests](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml/badge.svg)](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/USERNAME/ginja-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/ginja-ai)
+
 ## Prerequisites
 
 | Tool       | Version | Install                                                   |
@@ -128,7 +131,3 @@ uv run pytest
 | `ALLOWED_ORIGINS` | `["*"]`     | CORS allowed origins (JSON array)  |
 | `LOG_LEVEL`       | `INFO`      | Python logging level               |
 | `DATABASE_URL`    | `postgresql+asyncpg://...` | Async PostgreSQL connection URL |
-
-## License
-
-Private — All rights reserved.

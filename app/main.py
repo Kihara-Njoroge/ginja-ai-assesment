@@ -1,15 +1,18 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
 from app.config import get_settings
 from app.database import engine
 from app.middleware import RequestLoggingMiddleware
-from app.routers import health
+from app.routers import health_router, user_router, auth_router
+
+import app.views.health  # noqa: F401
+import app.views.auth.users  # noqa: F401
+import app.views.auth.verification  # noqa: F401
 
 
 @asynccontextmanager
@@ -46,25 +49,40 @@ def create_app() -> FastAPI:
     @app.get("/docs", include_in_schema=False)
     async def rapidoc_html() -> HTMLResponse:
         """Serve RapiDoc Custom UI."""
-        html = f"""
-        <!doctype html> <!-- Important: must specify -->
-        <html>
-        <head>
-            <meta charset="utf-8"> <!-- Important: ios -->
-            <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
-            <title>{settings.APP_NAME} - API Docs</title>
-        </head>
-        <body>
-            <rapi-doc 
+        html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Ginja AI API Docs</title>
+                <meta charset="utf-8" />
+                <meta
+                http-equiv="Content-Security-Policy"
+                content="upgrade-insecure-requests"
+                />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <script
+                type="module"
+                src="https://cdn.jsdelivr.net/npm/rapidoc@latest/dist/rapidoc-min.js"
+                ></script>
+            </head>
+            <body>
+                <rapi-doc
                 spec-url="/openapi.json"
-                theme="dark"
-                render-style="read"
-                show-header="false"
-                allow-server-selection="false"
                 allow-authentication="true"
-            > </rapi-doc>
-        </body>
-        </html>
+                allow-search="true"
+                allow-try="true"
+                theme="dark"
+                schema-style="table"
+                show-method-in-nav-bar="as-colored-text"
+                allow-server-selection="false"
+                show-header="true"
+                info-description-headings-in-navbar="true"
+                persist-auth="true"
+                schema-description-expanded="true"
+                >
+                </rapi-doc>
+            </body>
+            </html>
         """
         return HTMLResponse(html)
 
@@ -79,6 +97,12 @@ def create_app() -> FastAPI:
     )
 
     # Routers
-    app.include_router(health.router)
+    prefix = getattr(settings, "APP_PREFIX", "")
+    api_router = APIRouter(prefix=prefix)
+    api_router.include_router(health_router)
+    api_router.include_router(user_router)
+    api_router.include_router(auth_router)
+
+    app.include_router(api_router)
 
     return app

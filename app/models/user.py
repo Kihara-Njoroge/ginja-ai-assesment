@@ -1,31 +1,21 @@
-import enum
 import uuid
 from datetime import datetime
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.token import VerificationToken
 
 from sqlalchemy import Boolean, DateTime, Enum, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from fastapi import HTTPException
 
 from app.database import Base
-
-
-class UserRole(str, enum.Enum):
-    """Roles for user authorization."""
-
-    ADMIN = "admin"
-    USER = "user"
-
-
-class UserStatus(str, enum.Enum):
-    """Lifecycle status of a user account."""
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
+from app.enums import UserRole, UserStatus
 
 
 class User(Base):
-    """User model with authentication and authorization fields."""
+    """User model."""
 
     __tablename__ = "users"
 
@@ -50,19 +40,35 @@ class User(Base):
 
     # Status & Roles
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role_enum", create_type=False),
+        Enum(
+            UserRole,
+            name="user_role_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         default=UserRole.USER,
         nullable=False,
         server_default=UserRole.USER.value,
     )
     status: Mapped[UserStatus] = mapped_column(
-        Enum(UserStatus, name="user_status_enum", create_type=False),
-        default=UserStatus.INACTIVE,
+        Enum(
+            UserStatus,
+            name="user_status_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
+        default=UserStatus.ACTIVE,
         nullable=False,
-        server_default=UserStatus.INACTIVE.value,
+        server_default=UserStatus.ACTIVE.value,
     )
     is_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default="false"
+    )
+    is_superuser: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default="false"
+    )
+    verification_tokens: Mapped[list["VerificationToken"]] = relationship(
+        "VerificationToken", back_populates="user", cascade="all, delete-orphan"
     )
 
     # Timestamps
@@ -83,3 +89,124 @@ class User(Base):
     def is_active(self) -> bool:
         """Helper property to check if user can log in."""
         return self.status == UserStatus.ACTIVE
+
+    @property
+    def password(self):
+        raise ValueError("Cannot access this value directly")
+
+    @password.setter
+    def password(self, value):
+        raise ValueError("Cannot set password value directly. Use cls.set_password")
+
+    def set_password(self, password: str) -> "User":
+        if len(password) < 8:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Password must be at least 8 characters long."},
+            )
+
+        if not (
+            any(c.isupper() for c in password)
+            and any(c.islower() for c in password)
+            and any(c.isdigit() for c in password)
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Password must contain one uppercase letter (A-Z), one lowercase letter (a-z) and at least one digit (0-9)."
+                },
+            )
+
+        from passlib.hash import bcrypt
+
+        self.hashed_password = bcrypt.hash(password)
+        return self
+
+    def check_password(self, password: str) -> bool:
+        """Returns true if the password matches."""
+        if not self.hashed_password:
+            return False
+
+        from passlib.hash import bcrypt
+
+        return bcrypt.verify(password, self.hashed_password)
+
+    @property
+    def name(self):
+        """Returns the full capitalized name or None."""
+        if not self.first_name and not self.last_name:
+            return None
+
+        name = " ".join(
+            n.capitalize() for n in [self.first_name or "", self.last_name or ""] if n
+        ).strip()
+
+        return name if name else None
+
+
+# Custom exception for business logic validation
+class EmailAlreadyExistsError(Exception):
+    """Raised when attempting to register with an email that already exists"""
+
+    def __init__(self, email: str):
+        self.email = email
+        super().__init__(f"Email {email} is already registered")
+
+
+class PhoneAlreadyExistsError(Exception):
+    """Raised when attempting to register with a phone number that already exists"""
+
+    def __init__(self, phone_number: str):
+        self.phone_number = phone_number
+        super().__init__(f"Phone Number {phone_number} already exists")
+
+
+# Service layer validation function
+async def validate_email_unique(db, email: str, exclude_user_id: Optional[str] = None):
+    """
+    Validate that email is unique in the database
+
+    Args:
+        db: AsyncSession database connection
+        email: Email to validate
+        exclude_user_id: Optional user ID to exclude from uniqueness check (for updates)
+
+    Raises:
+        EmailAlreadyExistsError: If email already exists
+    """
+    from sqlalchemy.future import select
+
+    query = select(User).where(User.email == email)
+    result = await db.execute(query)
+    existing_user = result.scalars().first()
+
+    if existing_user and (
+        not exclude_user_id or str(existing_user.id) != exclude_user_id
+    ):
+        raise EmailAlreadyExistsError(email)
+
+
+async def validate_phone_unique(
+    db, phone_number: str, exclude_user_id: Optional[str] = None
+):
+    """
+    Validate that phone_number is unique in the database
+
+    Args:
+        db: AsyncSession database connection
+        phone_number: Phone Number to validate
+        exclude_user_id: Optional user ID to exclude from uniqueness check (for updates)
+
+    Raises:
+        PhoneAlreadyExistsError: If phone already exists
+    """
+    from sqlalchemy.future import select
+
+    query = select(User).where(User.phone_number == phone_number)
+    result = await db.execute(query)
+    existing_user = result.scalars().first()
+
+    if existing_user and (
+        not exclude_user_id or str(existing_user.id) != exclude_user_id
+    ):
+        raise PhoneAlreadyExistsError(phone_number)
