@@ -1,7 +1,5 @@
 # Ginja AI
 
-Production-ready FastAPI application managed with [uv](https://docs.astral.sh/uv/).
-
 ## Prerequisites
 
 | Tool   | Version | Install                                                   |
