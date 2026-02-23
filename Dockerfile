@@ -11,8 +11,15 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
-# Copy application code and install project
+# Copy application code and install project WITH dev dependencies for testing
 COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
+
+# Run the test suite and verify coverage during the build
+RUN uv run coverage run -m pytest -v && uv run coverage xml
+
+# Strip dev dependencies before transferring the virtual environment to the runtime image
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 

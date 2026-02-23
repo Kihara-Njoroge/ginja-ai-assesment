@@ -1,5 +1,8 @@
 # Ginja AI
 
+[![CI Tests](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml/badge.svg)](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/USERNAME/ginja-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/ginja-ai)
+
 ## Prerequisites
 
 | Tool       | Version | Install                                                   |
