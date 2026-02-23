@@ -213,6 +213,16 @@ The application follows **Clean Architecture** principles:
    - PARTIAL: Approved up to remaining benefit
    - REJECTED: Failed validation or fraud + over limit
 
+## Improvements for Production
+
+While this application implements a robust Clean Architecture and FastAPI best-practices, the following improvements are recommended for a true enterprise production environment:
+
+1. **Caching**: Implement a Redis caching layer for high-volume static reads (e.g., retrieving `Procedures`, `Diagnoses`, or verifying active `Members`) to reduce database query loads.
+2. **Queueing & Async Jobs**: Move the claim validation processing into a background task queue using **Celery** or **RabbitMQ**. The API should return a generic `202 Accepted` status with a webhook/polling URL, allowing complex background machine learning fraud models to evaluate the claim asynchronously without enforcing blocking timeouts on the client.
+3. **Rate Limiting**: Implement API rate-limiting algorithms (e.g., Token Bucket via Redis) to prevent Hospital nodes from inadvertently (or maliciously) DDoSing the claims validation engine.
+4. **Advanced Fraud ML Models**: Replace the simplistic `2x Average Cost` heuristic with sophisticated Machine Learning predictive models (e.g., Isolation Forests) assessing historical patterns, provider anomalies, and multidimensional claim features.
+5. **Observability**: Integrate OpenTelemetry for distributed tracing to monitor the latency breakdown of every component inside the validation pipeline.
+
 ## API Endpoints
 
 ### Health
@@ -233,7 +243,6 @@ The application follows **Clean Architecture** principles:
 - `GET /claims/{id}` - Get claim details
 - `GET /claims` - List claims (with filters)
 
-For detailed API documentation with examples, see [CLAIMS_SYSTEM.md](./CLAIMS_SYSTEM.md).
 
 ## Environment Variables
 
