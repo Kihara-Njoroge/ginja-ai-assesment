@@ -42,8 +42,8 @@ Start PostgreSQL (via Docker or locally), then run migrations:
 # Start PostgreSQL with Docker (if not running locally)
 docker compose up db -d
 
-# Run migrations
-uv run alembic upgrade head
+# Run migrations (generates and applies)
+./bin/migrate.sh
 ```
 
 ### 5. Run the server
@@ -82,34 +82,15 @@ docker compose up --build
 docker compose up --build -d
 ```
 
-## Project Structure
-
-```
-ginja-ai/
-├── app/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI app factory
-│   ├── config.py            # Settings (env-based via pydantic-settings)
-│   ├── database.py          # Async SQLAlchemy engine & session
-│   ├── models.py            # SQLAlchemy ORM models
-│   ├── middleware.py         # Request logging middleware
-│   └── routers/
-│       ├── __init__.py
-│       └── health.py        # GET /health
-├── alembic/
-│   ├── env.py               # Migration environment (async)
-│   └── versions/            # Migration scripts
-├── alembic.ini              # Alembic configuration
-├── main.py                  # Entrypoint (uvicorn runner)
-├── pyproject.toml            # Project metadata & dependencies
-├── uv.lock                  # Locked dependency versions
-├── Dockerfile               # Multi-stage production build
-├── docker-compose.yml       # Container orchestration
-├── .env.example             # Environment variable template
-└── README.md
-```
-
 ## Database Migrations
+
+Use the provided bash script to automatically generate and apply migrations when you change the models:
+
+```bash
+./bin/migrate.sh
+```
+
+**Manual commands (if needed)**:
 
 ```bash
 # Create a new migration after changing models
