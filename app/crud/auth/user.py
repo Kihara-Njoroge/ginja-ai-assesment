@@ -8,6 +8,9 @@ from app.models.user import User
 from app.schemas.auth.user_schemas import RegisterInput, UpdateUserInput
 
 
+from app.utils.create_update_delete import create_update_delete_handler
+
+
 async def get_user_by_id(db: AsyncSession, user_id: UUID) -> Optional[User]:
     """Retrieve a user by their ID."""
     query = select(User).where(User.id == user_id)
@@ -39,53 +42,36 @@ async def get_users(
 
 
 async def create_user(db: AsyncSession, user_in: RegisterInput) -> User:
-    """Create a new user."""
-    # Create the user instance
-    user = User(
-        email=user_in.email,
-        phone_number=user_in.phone_number,
-        first_name=user_in.first_name,
-        last_name=user_in.last_name,
-        status=user_in.status,
+    """Create a new user using the generic handler."""
+    # Temporarily create a user to validate/hash the password using the complex logic
+    temp_user = User()
+    temp_user.set_password(user_in.password)
+
+    user_data = user_in.model_dump(exclude={"password"})
+    user_data["hashed_password"] = temp_user.hashed_password
+
+    user = await create_update_delete_handler(
+        model=User,
+        db=db,
+        data=user_data,
+        method="create",
     )
-
-    # Hash and set the password using the complex set_password method
-    user.set_password(user_in.password)
-
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
     return user
 
 
 async def update_user(
     db: AsyncSession, user_id: UUID, user_in: UpdateUserInput
 ) -> Optional[User]:
-    """Update a user."""
-    user = await get_user_by_id(db, user_id)
-    if not user:
-        return None
-
-    update_data = user_in.model_dump(exclude_unset=True)
-
-    # Exclude fields from the schema that don't exist in the model
-    valid_fields = ["first_name", "last_name", "email", "phone_number"]
-
-    for field in valid_fields:
-        if field in update_data:
-            setattr(user, field, update_data[field])
-
-    await db.commit()
-    await db.refresh(user)
+    """Update a user using the generic handler."""
+    user = await create_update_delete_handler(
+        model=User, db=db, data=user_in, method="update", query={"id": user_id}
+    )
     return user
 
 
 async def delete_user(db: AsyncSession, user_id: UUID) -> bool:
-    """Delete a user."""
-    user = await get_user_by_id(db, user_id)
-    if not user:
-        return False
-
-    await db.delete(user)
-    await db.commit()
+    """Delete a user using the generic handler."""
+    await create_update_delete_handler(
+        model=User, db=db, method="delete", query={"id": user_id}
+    )
     return True
