@@ -27,9 +27,18 @@ class VerificationTokenSafeResponse(BaseModel):
 
 
 class RequestOTPInput(BaseModel):
-    identifier: str
+    username: str
 
 
 class ValidateOTPInput(BaseModel):
-    identifier: str
+    username: str
     otp: str
+
+
+class LoginInput(BaseModel):
+    username: str
+    password: str
+
+
+class RefreshTokenInput(BaseModel):
+    refresh_token: str

@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
             <!DOCTYPE html>
             <html>
             <head>
-                <title>{{ title|default("Docs")}} | Flip Api Docs</title>
+                <title>Ginja AI API Docs</title>
                 <meta charset="utf-8" />
                 <meta
                 http-equiv="Content-Security-Policy"

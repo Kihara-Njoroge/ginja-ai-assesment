@@ -66,8 +66,8 @@ async def authenticate_user(db: AsyncSession, username: str, password: str):
     return user
 
 
-async def authenticate_user_via_otp(db: AsyncSession, identifier: str, otp: str):
-    user = await get_user_by_phone_or_email(db, identifier)
+async def authenticate_user_via_otp(db: AsyncSession, username: str, otp: str):
+    user = await get_user_by_phone_or_email(db, username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"

@@ -43,7 +43,7 @@ async def register_user(user_in: RegisterInput, db: AsyncSession = Depends(get_d
 
 
 @user_router.get("", response_model=QueryResp)
-async def read_users(
+async def list_users(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve all users with pagination."""
@@ -55,7 +55,7 @@ async def read_users(
 
 
 @user_router.get("/{user_id}", response_model=UserGetSchema)
-async def read_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     """Retrieve a specific user by ID."""
     user = await get_user_by_id(db, user_id)
     if not user:
