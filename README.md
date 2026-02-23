@@ -64,8 +64,7 @@ uv run uvicorn app.main:create_app --factory --reload
 
 | URL                           | Description           |
 | ----------------------------- | --------------------- |
-| http://localhost:8000/docs    | Swagger UI            |
-| http://localhost:8000/redoc   | ReDoc                 |
+| http://localhost:8000/docs    | API Docs (RapiDoc)    |
 | http://localhost:8000/health  | Health check endpoint |
 
 ## Docker
