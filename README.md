@@ -1,7 +1,17 @@
-# Ginja AI
+# Ginja AI - Health Claims Intelligence Platform
 
 [![CI Tests](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml/badge.svg)](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/USERNAME/ginja-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/ginja-ai)
+
+Africa's most embedded health claims intelligence platform. We integrate directly with hospitals and insurers to validate claims in real-time.
+
+## Features
+
+- **Real-time Claim Validation**: Instant eligibility and benefit verification
+- **Fraud Detection**: Automated fraud signal detection using cost analysis
+- **RESTful API**: Clean, well-documented API endpoints
+- **Scalable Architecture**: Built with FastAPI and PostgreSQL for high performance
+- **Production Ready**: Comprehensive error handling, logging, and monitoring
 
 ## Prerequisites
 
@@ -47,6 +57,9 @@ docker compose up db -d
 
 # Run migrations (generates and applies)
 ./bin/migrate.sh
+
+# Seed test data for claims system
+uv run python bin/seed_data.py
 ```
 
 ### 5. Run the server
@@ -65,10 +78,41 @@ uv run uvicorn app.main:create_app --factory --reload
 
 ### 6. Explore the API
 
-| URL                           | Description           |
-| ----------------------------- | --------------------- |
-| http://localhost:8000/docs    | API Docs (RapiDoc)    |
-| http://localhost:8000/health  | Health check endpoint |
+| URL                           | Description                    |
+| ----------------------------- | ------------------------------ |
+| http://localhost:8000/docs    | API Docs (RapiDoc)             |
+| http://localhost:8000/health  | Health check endpoint          |
+| http://localhost:8000/claims  | Claims management endpoints    |
+
+## Quick Start - Claims API
+
+### Submit a Claim
+
+```bash
+curl -X POST http://localhost:8000/claims \
+  -H "Content-Type: application/json" \
+  -d '{
+    "member_id": "M123",
+    "provider_id": "H456",
+    "diagnosis_code": "D001",
+    "procedure_code": "P001",
+    "claim_amount": 15000
+  }'
+```
+
+### Get Claim Status
+
+```bash
+curl http://localhost:8000/claims/{claim_id}
+```
+
+### List Claims
+
+```bash
+curl "http://localhost:8000/claims?member_id=M123&status=APPROVED"
+```
+
+For detailed API documentation, see [CLAIMS_SYSTEM.md](./CLAIMS_SYSTEM.md).
 
 ## Docker
 
@@ -118,6 +162,78 @@ Run tests:
 ```bash
 uv run pytest
 ```
+
+Run with coverage:
+
+```bash
+uv run pytest --cov=app --cov-report=html
+```
+
+## Project Structure
+
+```
+ginja-ai/
+├── app/
+│   ├── models/          # Database models (User, Claim, Member, Provider, etc.)
+│   ├── schemas/         # Pydantic schemas for API validation
+│   ├── crud/            # Database operations
+│   ├── utils/           # Business logic (claim validation, fraud detection)
+│   ├── views/           # API route handlers
+│   ├── config.py        # Application configuration
+│   ├── database.py      # Database connection setup
+│   └── main.py          # FastAPI application factory
+├── tests/
+│   ├── integration/     # Integration tests
+│   └── unit/            # Unit tests
+├── alembic/             # Database migrations
+├── bin/                 # Utility scripts
+│   ├── migrate.sh       # Migration helper
+│   └── seed_data.py     # Seed test data
+└── CLAIMS_SYSTEM.md     # Detailed claims system documentation
+```
+
+## Architecture
+
+The application follows **Clean Architecture** principles:
+
+- **Models**: Domain entities with business logic
+- **Schemas**: API contracts and validation
+- **CRUD**: Data access layer
+- **Utils**: Business logic and validation rules
+- **Views**: API endpoints and request handling
+
+### Claims Validation Workflow
+
+1. **Member Eligibility**: Verify member is active with available benefits
+2. **Provider Validation**: Ensure provider is registered and active
+3. **Medical Codes**: Validate diagnosis and procedure codes
+4. **Fraud Detection**: Flag claims exceeding 2x average procedure cost
+5. **Approval Decision**:
+   - APPROVED: Full amount within limits
+   - PARTIAL: Approved up to remaining benefit
+   - REJECTED: Failed validation or fraud + over limit
+
+## API Endpoints
+
+### Health
+- `GET /health` - Health check
+
+### Authentication
+- `POST /auth/request-otp` - Request OTP for login
+- `POST /auth/validate-otp` - Validate OTP and get tokens
+- `POST /auth/refresh` - Refresh access token
+
+### Users
+- `POST /users` - Register new user
+- `GET /users` - List users
+- `GET /users/{id}` - Get user details
+
+### Claims
+- `POST /claims` - Submit new claim
+- `GET /claims/{id}` - Get claim details
+- `GET /claims` - List claims (with filters)
+
+For detailed API documentation with examples, see [CLAIMS_SYSTEM.md](./CLAIMS_SYSTEM.md).
 
 ## Environment Variables
 
