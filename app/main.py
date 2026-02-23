@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.database import engine
 from app.middleware import RequestLoggingMiddleware
 from app.routers import health
 
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     logger = logging.getLogger(__name__)
     logger.info("Starting %s v%s", settings.APP_NAME, settings.APP_VERSION)
     yield
+    await engine.dispose()
     logger.info("Shutting down %s", settings.APP_NAME)
 
 

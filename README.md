@@ -2,11 +2,12 @@
 
 ## Prerequisites
 
-| Tool   | Version | Install                                                   |
-| ------ | ------- | --------------------------------------------------------- |
-| Python | ≥ 3.13  | [python.org](https://www.python.org/downloads/)           |
-| uv     | latest  | `curl -LsSf https://astral.sh/uv/install.sh \| sh`       |
-| Docker | latest  | *(optional)* [docker.com](https://docs.docker.com/get-docker/) |
+| Tool       | Version | Install                                                   |
+| ---------- | ------- | --------------------------------------------------------- |
+| Python     | ≥ 3.13  | [python.org](https://www.python.org/downloads/)           |
+| uv         | latest  | `curl -LsSf https://astral.sh/uv/install.sh \| sh`       |
+| PostgreSQL | ≥ 15    | [postgresql.org](https://www.postgresql.org/download/) or use Docker |
+| Docker     | latest  | *(optional)* [docker.com](https://docs.docker.com/get-docker/) |
 
 ## Local Setup
 
@@ -33,7 +34,19 @@ cp .env.example .env
 
 Edit `.env` to set your own values. All variables have sensible defaults.
 
-### 4. Run the server
+### 4. Set up the database
+
+Start PostgreSQL (via Docker or locally), then run migrations:
+
+```bash
+# Start PostgreSQL with Docker (if not running locally)
+docker compose up db -d
+
+# Run migrations
+uv run alembic upgrade head
+```
+
+### 5. Run the server
 
 ```bash
 uv run python main.py
@@ -47,7 +60,7 @@ The API will be available at **http://localhost:8000**.
 uv run uvicorn app.main:create_app --factory --reload
 ```
 
-### 5. Explore the API
+### 6. Explore the API
 
 | URL                           | Description           |
 | ----------------------------- | --------------------- |
@@ -77,10 +90,16 @@ ginja-ai/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI app factory
 │   ├── config.py            # Settings (env-based via pydantic-settings)
+│   ├── database.py          # Async SQLAlchemy engine & session
+│   ├── models.py            # SQLAlchemy ORM models
 │   ├── middleware.py         # Request logging middleware
 │   └── routers/
 │       ├── __init__.py
 │       └── health.py        # GET /health
+├── alembic/
+│   ├── env.py               # Migration environment (async)
+│   └── versions/            # Migration scripts
+├── alembic.ini              # Alembic configuration
 ├── main.py                  # Entrypoint (uvicorn runner)
 ├── pyproject.toml            # Project metadata & dependencies
 ├── uv.lock                  # Locked dependency versions
@@ -88,6 +107,19 @@ ginja-ai/
 ├── docker-compose.yml       # Container orchestration
 ├── .env.example             # Environment variable template
 └── README.md
+```
+
+## Database Migrations
+
+```bash
+# Create a new migration after changing models
+uv run alembic revision --autogenerate -m "description"
+
+# Apply all pending migrations
+uv run alembic upgrade head
+
+# Rollback one migration
+uv run alembic downgrade -1
 ```
 
 ## Development
@@ -115,6 +147,7 @@ uv run pytest
 | `PORT`            | `8000`      | Server port                        |
 | `ALLOWED_ORIGINS` | `["*"]`     | CORS allowed origins (JSON array)  |
 | `LOG_LEVEL`       | `INFO`      | Python logging level               |
+| `DATABASE_URL`    | `postgresql+asyncpg://...` | Async PostgreSQL connection URL |
 
 ## License
 

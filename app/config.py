@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Database
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ginja_ai"
+
 
 @lru_cache
 def get_settings() -> Settings:
