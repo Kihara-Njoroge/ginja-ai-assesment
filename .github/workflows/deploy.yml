@@ -2,7 +2,7 @@ name: Deploy to Azure Container Apps
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
 env:
   # Azure Credentials mapped from GitHub Secrets
