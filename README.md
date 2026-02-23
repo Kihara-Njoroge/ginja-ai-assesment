@@ -112,7 +112,7 @@ curl http://localhost:8000/claims/{claim_id}
 curl "http://localhost:8000/claims?member_id=M123&status=APPROVED"
 ```
 
-For detailed API documentation, see [CLAIMS_SYSTEM.md](./guides//CLAIMS_SYSTEM.md).
+For detailed API documentation, see [CLAIMS_SYSTEM.md](./guides/CLAIMS_SYSTEM.md).
 
 ## Docker
 
