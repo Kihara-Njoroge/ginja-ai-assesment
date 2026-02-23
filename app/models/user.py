@@ -37,16 +37,26 @@ class User(Base):
 
     # Status & Roles
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role_enum", create_type=False),
+        Enum(
+            UserRole,
+            name="user_role_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         default=UserRole.USER,
         nullable=False,
         server_default=UserRole.USER.value,
     )
     status: Mapped[UserStatus] = mapped_column(
-        Enum(UserStatus, name="user_status_enum", create_type=False),
-        default=UserStatus.INACTIVE,
+        Enum(
+            UserStatus,
+            name="user_status_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
+        default=UserStatus.ACTIVE,
         nullable=False,
-        server_default=UserStatus.INACTIVE.value,
+        server_default=UserStatus.ACTIVE.value,
     )
     is_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default="false"

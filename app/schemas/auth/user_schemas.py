@@ -26,7 +26,7 @@ class RegisterInput(BaseModel):
     email: EmailStr
     password: str
     phone_number: Optional[str] = None
-    status: UserStatus = UserStatus.INACTIVE
+    status: UserStatus = UserStatus.ACTIVE
     model_config = ConfigDict(from_attributes=True, str_strip_whitespace=True)
 
 
