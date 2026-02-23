@@ -12,6 +12,8 @@ dependencies = [
     "alembic>=1.15.0",
     "passlib>=1.7.4",
     "bcrypt==4.0.1",
+    "python-jose[cryptography]>=3.5.0",
+    "authlib>=1.6.8",
 ]
 
 [project.scripts]
