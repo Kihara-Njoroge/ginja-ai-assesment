@@ -192,15 +192,20 @@ ginja-ai/
 └── CLAIMS_SYSTEM.md     # Detailed claims system documentation
 ```
 
-## Architecture
+## Architecture & Technology Decisions
 
-The application follows **Clean Architecture** principles:
+The application follows **Clean Architecture** principles to ensure separation of concerns, scalability, and maintainability:
 
-- **Models**: Domain entities with business logic
-- **Schemas**: API contracts and validation
-- **CRUD**: Data access layer
-- **Utils**: Business logic and validation rules
-- **Views**: API endpoints and request handling
+- **Models**: Domain entities mapping directly to the database.
+- **Schemas**: Pydantic models for strict API request/response validation contracts.
+- **CRUD**: Dedicated Data Access Layer isolating database queries from business logic.
+- **Utils**: Core business logic, actuarial rules, and validation pipelines.
+- **Views**: FastAPI routing endpoints handling HTTP protocols and dependency injection.
+
+### Database Choice: PostgreSQL
+I chose **PostgreSQL** as the primary datastore, paired with **SQLAlchemy 2.0 (`asyncpg`)** for asynchronous operations.
+- **Why PostgreSQL?**: Health claims data requires strict ACID compliance, absolute data integrity, and complex relational querying algorithms (e.g., locking balances during concurrent claim evaluations).
+- **Asynchronous Driver**: Using `asyncpg` alongside FastAPI's asynchronous event loop allows the API to handle thousands of concurrent I/O-bound requests (database reads/writes) without blocking the thread pool, maximizing concurrency.
 
 ### Claims Validation Workflow
 
@@ -217,11 +222,12 @@ The application follows **Clean Architecture** principles:
 
 While this application implements a robust Clean Architecture and FastAPI best-practices, the following improvements are recommended for a true enterprise production environment:
 
-1. **Caching**: Implement a Redis caching layer for high-volume static reads (e.g., retrieving `Procedures`, `Diagnoses`, or verifying active `Members`) to reduce database query loads.
-2. **Queueing & Async Jobs**: Move the claim validation processing into a background task queue using **Celery** or **RabbitMQ**. The API should return a generic `202 Accepted` status with a webhook/polling URL, allowing complex background machine learning fraud models to evaluate the claim asynchronously without enforcing blocking timeouts on the client.
-3. **Rate Limiting**: Implement API rate-limiting algorithms (e.g., Token Bucket via Redis) to prevent Hospital nodes from inadvertently (or maliciously) DDoSing the claims validation engine.
-4. **Advanced Fraud ML Models**: Replace the simplistic `2x Average Cost` heuristic with sophisticated Machine Learning predictive models (e.g., Isolation Forests) assessing historical patterns, provider anomalies, and multidimensional claim features.
-5. **Observability**: Integrate OpenTelemetry for distributed tracing to monitor the latency breakdown of every component inside the validation pipeline.
+1. **Robust Authentication & Authorization (IAM)**: Implement an advanced Identity and Access Management module supporting **Organizations** (e.g., "Mombasa General Hospital"). This includes Role-Based Access Control (RBAC) allowing granular permissions where "Admin" roles can manage underlying users, but "Billing Provider" roles can only execute and submit claims. This multi-tenant logic is vital for B2B SaaS architecture.
+2. **Caching**: Implement a Redis caching layer for high-volume static reads (e.g., retrieving `Procedures`, `Diagnoses`, or verifying active `Members`) to reduce database query loads.
+3. **Queueing & Async Jobs**: Move the claim validation processing into a background task queue using **Celery** or **RabbitMQ**. The API should return a generic `202 Accepted` status with a webhook/polling URL, allowing complex background machine learning fraud models to evaluate the claim asynchronously without enforcing blocking timeouts on the client.
+4. **Rate Limiting**: Implement API rate-limiting algorithms (e.g., Token Bucket via Redis) to prevent Hospital nodes from inadvertently (or maliciously) DDoSing the claims validation engine.
+5. **Advanced Fraud ML Models**: Replace the simplistic `2x Average Cost` heuristic with sophisticated Machine Learning predictive models (e.g., Isolation Forests) assessing historical patterns, provider anomalies, and multidimensional claim features.
+6. **Observability**: Integrate OpenTelemetry for distributed tracing to monitor the latency breakdown of every component inside the validation pipeline.
 
 ## API Endpoints
 
