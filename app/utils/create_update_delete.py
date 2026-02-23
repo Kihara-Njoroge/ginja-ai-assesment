@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import Any, Optional
+from typing import Any
 from fastapi import HTTPException, status
 
 

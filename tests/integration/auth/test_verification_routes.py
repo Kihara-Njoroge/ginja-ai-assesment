@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import uuid
 
 from app.models.user import User
-from app.enums import UserStatus, VerificationTypeEnum
+from app.enums import UserStatus
 from app.models.token import VerificationToken
 
 

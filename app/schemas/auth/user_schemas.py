@@ -1,6 +1,5 @@
-import re
 import uuid
-from typing import Annotated, Optional, List, ClassVar
+from typing import Annotated, Optional, List
 from pydantic import (
     UUID4,
     ConfigDict,

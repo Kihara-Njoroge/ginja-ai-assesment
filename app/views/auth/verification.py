@@ -40,7 +40,9 @@ async def request_otp(
 
     # Generate a new OTP token
     token, otp_code = await create_otp_for_user(
-        db=db, user=user, client_token_expiry=10  # 10 minutes expiry
+        db=db,
+        user=user,
+        client_token_expiry=10,  # 10 minutes expiry
     )
 
     # TODO: Integrate an email/SMS provider here to physically send the `otp_code`.

@@ -1,7 +1,6 @@
 import pytest
 from fastapi import HTTPException
 from app.models.user import User
-from app.enums import UserStatus, UserRole
 
 
 def test_user_initialization():

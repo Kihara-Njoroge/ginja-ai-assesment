@@ -3,16 +3,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
 from app.config import get_settings
 from app.database import engine
 from app.middleware import RequestLoggingMiddleware
 from app.routers import health_router, user_router, auth_router
-import app.views.health
-import app.views.auth.users
-import app.views.auth.verification
+
+import app.views.health  # noqa: F401
+import app.views.auth.users  # noqa: F401
+import app.views.auth.verification  # noqa: F401
 
 
 @asynccontextmanager
@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
     @app.get("/docs", include_in_schema=False)
     async def rapidoc_html() -> HTMLResponse:
         """Serve RapiDoc Custom UI."""
-        html = f"""
+        html = """
             <!DOCTYPE html>
             <html>
             <head>

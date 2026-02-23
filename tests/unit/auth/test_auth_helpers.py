@@ -1,5 +1,4 @@
 import pytest
-from datetime import datetime, timezone, timedelta
 from app.utils.auth_helpers import (
     create_access_token,
     create_refresh_token,
@@ -10,7 +9,6 @@ from app.utils.auth_helpers import (
 from app.models.user import User
 from app.enums import UserRole
 import uuid
-from jose import jwt
 from app.config import get_settings
 
 settings = get_settings()

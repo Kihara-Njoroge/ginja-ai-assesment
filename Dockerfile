@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
 
 # Run the test suite and verify coverage during the build
-# Note: Docker caches this step. If the code in `COPY . .` hasn't changed, 
+# Note: Docker caches this step. If the code in `COPY . .` hasn't changed,
 # Docker will instantly pass this step because it knows the tests already passed for this specific code state.
 RUN uv run coverage run -m pytest -v && uv run coverage xml
 
