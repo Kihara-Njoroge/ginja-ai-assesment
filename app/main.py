@@ -9,9 +9,10 @@ from fastapi.responses import HTMLResponse
 from app.config import get_settings
 from app.database import engine
 from app.middleware import RequestLoggingMiddleware
-from app.routers import health_router, user_router
+from app.routers import health_router, user_router, auth_router
 import app.views.health
 import app.views.auth.users
+import app.views.auth.verification
 
 
 @asynccontextmanager
@@ -98,5 +99,6 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(health_router)
     app.include_router(user_router)
+    app.include_router(auth_router)
 
     return app

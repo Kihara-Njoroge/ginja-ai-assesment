@@ -23,5 +23,13 @@ class VerificationTokenSafeResponse(BaseModel):
     can_resend: bool = Field(computed=True)
     remaining_minutes: int = Field(computed=True)
 
-    class Config(BaseModel):
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RequestOTPInput(BaseModel):
+    identifier: str
+
+
+class ValidateOTPInput(BaseModel):
+    identifier: str
+    otp: str
