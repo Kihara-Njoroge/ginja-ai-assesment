@@ -1,9 +1,7 @@
 # Ginja AI - Health Claims Intelligence Platform
 
-[![CI Tests](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml/badge.svg)](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/USERNAME/ginja-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/ginja-ai)
+[![codecov](https://codecov.io/github/Kihara-Njoroge/ginja-ai-assesment/branch/master/graph/badge.svg?token=5BVJM7JVAX)](https://codecov.io/github/Kihara-Njoroge/ginja-ai-assesment)
 
-Africa's most embedded health claims intelligence platform. We integrate directly with hospitals and insurers to validate claims in real-time.
 
 ## Features
 
@@ -86,10 +84,26 @@ uv run uvicorn app.main:create_app --factory --reload
 
 ## Quick Start - Claims API
 
-### Submit a Claim
+> **Note:** Claims endpoints are protected by JWT authentication. Obtain an access token first by registering a user and logging in via the `/auth` endpoints (see [Authentication](#authentication) below), then pass it as a Bearer token.
+
+### 1. Register & authenticate
+
+```bash
+# Register a user
+curl -X POST http://localhost:8000/users \
+  -H "Content-Type: application/json" \
+  -d '{"email": "doctor@ginja.ai", "phone_number": "+254712345678", "first_name": "Test", "last_name": "Doctor", "password": "StrongPass_123!"}'
+
+# Login (returns access_token + refresh_token)
+curl -X POST http://localhost:8000/auth/login \
+  -d 'username=doctor@ginja.ai&password=StrongPass_123!'
+```
+
+### 2. Submit a claim
 
 ```bash
 curl -X POST http://localhost:8000/claims \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "member_id": "M123",
@@ -100,16 +114,18 @@ curl -X POST http://localhost:8000/claims \
   }'
 ```
 
-### Get Claim Status
+### 3. Get claim status
 
 ```bash
-curl http://localhost:8000/claims/{claim_id}
+curl -H "Authorization: Bearer <access_token>" \
+  http://localhost:8000/claims/{claim_id}
 ```
 
-### List Claims
+### 4. List claims (with filters)
 
 ```bash
-curl "http://localhost:8000/claims?member_id=M123&status=APPROVED"
+curl -H "Authorization: Bearer <access_token>" \
+  "http://localhost:8000/claims?member_id=M123&status=APPROVED"
 ```
 
 For detailed API documentation, see [CLAIMS_SYSTEM.md](./guides/CLAIMS_SYSTEM.md).
@@ -202,10 +218,20 @@ The application follows **Clean Architecture** principles to ensure separation o
 - **Utils**: Core business logic, actuarial rules, and validation pipelines.
 - **Views**: FastAPI routing endpoints handling HTTP protocols and dependency injection.
 
+### API Framework: FastAPI
+I chose **FastAPI** for its native async/await support, automatic OpenAPI documentation generation, and Pydantic-based request validation. In a real-time claims processing context, these characteristics are critical the API must handle high-throughput hospital integrations while maintaining strict type-safety on financial data. FastAPI's dependency injection system also cleanly separates cross-cutting concerns (authentication, database sessions) from business logic.
+
 ### Database Choice: PostgreSQL
 I chose **PostgreSQL** as the primary datastore, paired with **SQLAlchemy 2.0 (`asyncpg`)** for asynchronous operations.
 - **Why PostgreSQL?**: Health claims data requires strict ACID compliance, absolute data integrity, and complex relational querying algorithms (e.g., locking balances during concurrent claim evaluations).
 - **Asynchronous Driver**: Using `asyncpg` alongside FastAPI's asynchronous event loop allows the API to handle thousands of concurrent I/O-bound requests (database reads/writes) without blocking the thread pool, maximizing concurrency.
+- **Schema Design**: The relational model enforces foreign key constraints between Claims → Members, Providers, Diagnoses, and Procedures, ensuring referential integrity across the claims pipeline. Indexes on `member_id`, `provider_id`, `status`, and `created_at` optimize the most common query patterns.
+
+### Authentication: JWT + OTP
+The API implements a stateless JWT authentication scheme with access/refresh token pairs. OTP-based login is supported as an alternative to password authentication, which enables secure passwordless flows for hospital staff. Token validation uses FastAPI's `Depends()` injection to cleanly gate protected routes without polluting business logic.
+
+### Testing Strategy
+Tests are organized into **unit tests** (isolated business logic with mocked dependencies) and **integration tests** (HTTP-level endpoint validation). The `ClaimValidator` unit tests cover every branch of the validation pipeline  member eligibility, provider status, medical code verification, fraud thresholds, and approval determination  ensuring the core decisioning engine is fully regression-tested. Pre-commit hooks enforce linting (`ruff`) and test execution before every commit.
 
 ### Claims Validation Workflow
 
@@ -224,10 +250,11 @@ While this application implements a robust Clean Architecture and FastAPI best-p
 
 1. **Robust Authentication & Authorization (IAM)**: Implement an advanced Identity and Access Management module supporting **Organizations** (e.g., "Mombasa General Hospital"). This includes Role-Based Access Control (RBAC) allowing granular permissions where "Admin" roles can manage underlying users, but "Billing Provider" roles can only execute and submit claims. This multi-tenant logic is vital for B2B SaaS architecture.
 2. **Caching**: Implement a Redis caching layer for high-volume static reads (e.g., retrieving `Procedures`, `Diagnoses`, or verifying active `Members`) to reduce database query loads.
-3. **Queueing & Async Jobs**: Move the claim validation processing into a background task queue using **Celery** or **RabbitMQ**. The API should return a generic `202 Accepted` status with a webhook/polling URL, allowing complex background machine learning fraud models to evaluate the claim asynchronously without enforcing blocking timeouts on the client.
+3. **Event-Driven Architecture & Async Processing**: Migrate the claim validation pipeline to an event-driven model using **Apache Kafka** or **RabbitMQ**. When a hospital submits a claim, the API publishes a `claim.submitted` event and immediately returns `202 Accepted` with a tracking ID. Downstream consumers handle validation, fraud analysis, and approval asynchronously. This decouples the ingestion layer from processing, enables horizontal scaling of fraud detection workers, and supports audit event sourcing — critical for compliance in the health insurance domain.
 4. **Rate Limiting**: Implement API rate-limiting algorithms (e.g., Token Bucket via Redis) to prevent Hospital nodes from inadvertently (or maliciously) DDoSing the claims validation engine.
 5. **Advanced Fraud ML Models**: Replace the simplistic `2x Average Cost` heuristic with sophisticated Machine Learning predictive models (e.g., Isolation Forests) assessing historical patterns, provider anomalies, and multidimensional claim features.
-6. **Observability**: Integrate OpenTelemetry for distributed tracing to monitor the latency breakdown of every component inside the validation pipeline.
+6. **Observability & Structured Logging**: Integrate OpenTelemetry for distributed tracing and adopt JSON-structured logging (e.g., `python-json-logger`) with correlation IDs per claim. This enables seamless integration with **ELK stack** or **Grafana Loki** for centralized log aggregation, and **Prometheus** metrics for real-time dashboards monitoring claim throughput, fraud detection rates, and validation latencies.
+7. **Webhooks & External Notifications**: Implement webhook callbacks to notify hospitals and insurers when claim status changes (e.g., from `PENDING` → `APPROVED`). This enables real-time integration with hospital billing systems without requiring polling.
 
 ## API Endpoints
 
@@ -286,3 +313,13 @@ To enable the pipeline, the following secrets must be added to your GitHub repos
 | `REGISTRY_PASSWORD` | Access key for the ACR. |
 | `AZURE_RESOURCE_GROUP` | The Resource Group holding your Container Apps. |
 | `CONTAINER_APP_NAME` | The exact name of your deployed Azure Container App. |
+
+### Post-Deployment: Database Initialization
+
+After the CI/CD pipeline successfully deploys the image, the Azure Container App automatically runs database migrations (`alembic upgrade head`) and seeds initial data (`seed_data.py`) automatically on startup.
+
+**Refer to `guides/AZURE_GUIDE.md` (Steps 7–8)** for direct Azure CLI commands demonstrating how to:
+1. Provision a native Azure PostgreSQL Flexible Server.
+2. Inject the resulting `DATABASE_URL` connection string securely into the Container App environment.
+
+Once injected, the database configuring and seeding sequence handles itself autonomously!

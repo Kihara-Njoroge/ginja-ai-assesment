@@ -57,7 +57,7 @@ curl -X POST http://localhost:8000/claims \
 ```
 
 #### Failed Fraud Evaluation Response (201 Created)
-Transactions violating actuarial thresholds natively inject `fraug_flag` tracking while restricting output scopes.
+Transactions violating actuarial thresholds natively inject `fraud_flag` tracking while restricting output scopes.
 ```json
 {
   "claim_id": "...",
@@ -119,3 +119,16 @@ Includes embedded pagination arrays alongside native generic representations.
   "page_size": 20
 }
 ```
+
+---
+
+## Event-Driven Architecture (Production Roadmap)
+
+The current implementation processes claims synchronously for simplicity and rapid validation feedback. In a production-scale deployment across multiple hospitals and insurers, an event-driven architecture would decouple ingestion from processing:
+
+1. **Claim Ingestion**: The `POST /claims` endpoint publishes a `claim.submitted` event to a message broker and immediately returns `202 Accepted` with a tracking `claim_id`.
+2. **Validation Workers**: Stateless consumer services pull events from the broker, execute the multi-tier validation pipeline (eligibility, fraud detection, benefit calculation), and publish `claim.processed` events.
+3. **Notification Service**: A downstream consumer listens for `claim.processed` events and dispatches webhook callbacks to hospitals and insurer dashboards with the final decision.
+4. **Audit Trail**: All events are persisted in an append-only event store, enabling full audit replay for compliance and regulatory inquiries.
+
+This architecture enables independent horizontal scaling of fraud detection, allows plugging in ML-based fraud models as additional consumers, and provides natural backpressure handling during high-volume claim submission windows (e.g., end-of-month hospital billing cycles).

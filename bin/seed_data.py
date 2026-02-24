@@ -17,7 +17,7 @@ from app.enums import MemberStatus
 async def seed_data():
     """Seed the database with sample data."""
     async with async_session() as db:
-        print("🌱 Seeding database with sample data...")
+        print("Seeding database with sample data...")
 
         # Create sample members
         members = [
@@ -136,15 +136,13 @@ async def seed_data():
             ),
         ]
 
-        # Add all data
-        db.add_all(members)
-        db.add_all(providers)
-        db.add_all(diagnoses)
-        db.add_all(procedures)
+        # Add all data using merge to ensure idempotency when running multiple times
+        for item in members + providers + diagnoses + procedures:
+            await db.merge(item)
 
         await db.commit()
 
-        print("✅ Database seeded successfully!")
+        print("Database seeded successfully!")
         print(f"   - {len(members)} members")
         print(f"   - {len(providers)} providers")
         print(f"   - {len(diagnoses)} diagnoses")
@@ -156,7 +154,7 @@ async def main():
     try:
         await seed_data()
     except Exception as e:
-        print(f"❌ Error seeding database: {e}")
+        print(f"Error seeding database: {e}")
         sys.exit(1)
     finally:
         await engine.dispose()

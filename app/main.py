@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import get_settings
 from app.database import engine
@@ -46,6 +46,11 @@ def create_app() -> FastAPI:
         docs_url=None,  # Disable default Swagger
         redoc_url=None,  # Disable default ReDoc
     )
+
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        """Redirect root requests to API documentation."""
+        return RedirectResponse(url="/docs")
 
     @app.get("/docs", include_in_schema=False)
     async def rapidoc_html() -> HTMLResponse:
