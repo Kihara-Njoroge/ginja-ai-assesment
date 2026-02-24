@@ -1,7 +1,11 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+set -e
 
-# Gene
-uv run alembic revision --autogenerate -m "description"
-
-# Apply migrations
-uv run alembic upgrade head
+echo "Running Alembic Migrations..."
+if [ -f "/app/.venv/bin/alembic" ]; then
+    /app/.venv/bin/alembic upgrade head
+elif command -v uv &> /dev/null; then
+    uv run alembic upgrade head
+else
+    alembic upgrade head
+fi

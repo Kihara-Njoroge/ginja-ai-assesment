@@ -122,13 +122,65 @@ This command will output a JSON object that looks exactly like this:
 
 ---
 
-## Final Review
-You should now have the following 6 secrets saved under your repository's **Settings > Secrets and variables > Actions**:
-1. `AZURE_RESOURCE_GROUP` (e.g., `ginja-rg`)
+## Step 7: Provision Azure PostgreSQL Flexible Server
+Ginja AI relies on PostgreSQL with asynchronous connectivity. You need a dedicated cloud database instance.
+
+```bash
+DB_SERVER_NAME="ginja-postgres-server"
+DB_ADMIN_USER="ginjaadmin"
+DB_ADMIN_PASS="StrongPassword123!"
+
+az postgres flexible-server create \
+  --resource-group $RG_NAME \
+  --name $DB_SERVER_NAME \
+  --location $LOCATION \
+  --admin-user $DB_ADMIN_USER \
+  --admin-password $DB_ADMIN_PASS \
+  --database-name ginja_ai \
+  --sku-name Standard_B1ms \
+  --tier Burstable \
+  --public-access 0.0.0.0 # Warning: In raw production, restrict this to your ACA subnets
+```
+
+---
+
+## Step 8: Configure the Database Connection
+Your deployed Azure Container App needs to know where this database is located. You must explicitly inject the secure `DATABASE_URL` routing path generated from the previous step.
+
+```bash
+DB_ENDPOINT="${DB_SERVER_NAME}.postgres.database.azure.com"
+# Construct the asyncpg connection string
+DB_URL="postgresql+asyncpg://${DB_ADMIN_USER}:${DB_ADMIN_PASS}@${DB_ENDPOINT}:5432/ginja_ai"
+
+# Inject the environment variable natively into the Azure Container App configurations
+az containerapp update \
+  --name $APP_NAME \
+  --resource-group $RG_NAME \
+  --set-env-vars DATABASE_URL="$DB_URL"
+```
+
+---
+
+## Step 9: Initialize Database Schema and Data
+You do **NOT** need to trigger the migrations or seed script manually!
+
+The deployed Ginja API runtime has been securely updated to leverage an autonomous Docker container `ENTRYPOINT` script (`bin/prestart.sh`).
+
+Whenever Azure spins up a fresh replica, or when the GitHub Actions CI/CD rolls out a fresh deployment, the sequence autonomously triggers:
+1. `alembic upgrade head` (Creating required tables mapping)
+2. `python bin/seed_data.py` (Seeding the initial test data idempotently)
+
+Once you map the `DATABASE_URL` environment string (from Step 8), the Container App configures itself entirely autonomously. Your platform is 100% live and ready for production API invocations!
+
+---
+
+## GitHub Actions: Final Review
+You should ensure you have the following **6 secrets** correctly saved under your remote GitHub repository's `Settings > Secrets and variables > Actions`:
+1. `AZURE_RESOURCE_GROUP` (e.g., `devsecops-rg`)
 2. `CONTAINER_APP_NAME` (e.g., `ginja-api`)
-3. `REGISTRY_LOGIN_SERVER` (e.g., `ginjaairegistry123.azurecr.io`)
+3. `REGISTRY_LOGIN_SERVER` (e.g., `ginjaaiappregistry.azurecr.io`)
 4. `REGISTRY_USERNAME`
 5. `REGISTRY_PASSWORD`
-6. `AZURE_CREDENTIALS` (The full JSON object)
+6. `AZURE_CREDENTIALS` (The full JSON payload object)
 
-Once these are set, simply run `git push` to your `main` branch. GitHub Actions will handle testing, tracking, Dockerizing, and natively deploying the new image to your active Azure URL!
+Every time you execute `git push` against the `master` repository, the GitHub Actions runner will handle running testing, tracing, Dockerizing, checking for strict CVEs, and natively updating the container image mapped to your active Azure URL!

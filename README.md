@@ -286,3 +286,13 @@ To enable the pipeline, the following secrets must be added to your GitHub repos
 | `REGISTRY_PASSWORD` | Access key for the ACR. |
 | `AZURE_RESOURCE_GROUP` | The Resource Group holding your Container Apps. |
 | `CONTAINER_APP_NAME` | The exact name of your deployed Azure Container App. |
+
+### Post-Deployment: Database Initialization
+
+After the CI/CD pipeline successfully deploys the image, the Azure Container App automatically runs database migrations (`alembic upgrade head`) and seeds initial data (`seed_data.py`) automatically on startup.
+
+**Refer to `guides/AZURE_GUIDE.md` (Steps 7–8)** for direct Azure CLI commands demonstrating how to:
+1. Provision a native Azure PostgreSQL Flexible Server.
+2. Inject the resulting `DATABASE_URL` connection string securely into the Container App environment.
+
+Once injected, the database configuring and seeding sequence handles itself autonomously!
