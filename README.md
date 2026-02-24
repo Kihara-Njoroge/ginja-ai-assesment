@@ -1,7 +1,6 @@
 # Ginja AI - Health Claims Intelligence Platform
 
-[![CI Tests](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml/badge.svg)](https://github.com/USERNAME/ginja-ai/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/USERNAME/ginja-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/ginja-ai)
+[![codecov](https://codecov.io/github/Kihara-Njoroge/ginja-ai-assesment/branch/master/graph/badge.svg?token=5BVJM7JVAX)](https://codecov.io/github/Kihara-Njoroge/ginja-ai-assesment)
 
 Africa's most embedded health claims intelligence platform. We integrate directly with hospitals and insurers to validate claims in real-time.
 
